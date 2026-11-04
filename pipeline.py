@@ -37,6 +37,8 @@ def write_log(status):
         f.write("\n".join(log_lines) + "\n\n")
 
 
+CENTS_FILES = ["orders_2026_03.csv"]            # exports known to store prices in cents
+
 # ---------- reusable cleaning functions ----------
 def parse_mixed_date(col):
     """Dates arrive as YYYY-MM-DD or DD.MM.YYYY - accept both."""
@@ -69,6 +71,11 @@ def clean_orders(orders):
     df["order_date"] = parse_mixed_date(df["order_date"])
     df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce").astype(float)
     df["unit_price"] = pd.to_numeric(df["unit_price"], errors="coerce").astype(float)
+    # price correction: the March export stores prices in cents (see Lab 3.1).
+    # Done here, BEFORE validation, so the price rules check the corrected values.
+    cents = df["source_file"].isin(CENTS_FILES)
+    df.loc[cents, "unit_price"] /= 100
+    log(f"Price correction: {int(cents.sum())} row(s) from {', '.join(CENTS_FILES)} divided by 100 (cents -> EUR)")
     return df
 
 
@@ -117,9 +124,6 @@ def validate(orders, customers):
 def split(orders, customers):
     """Row-level problems go to quarantine with a reason; the rest is trusted."""
     df = orders.copy()
-    # price correction: the March export stores prices in cents
-    df.loc[df["source_file"] == "orders_2026_03.csv", "unit_price"] /= 100
-
     reason = pd.Series("", index=df.index)
     reason[df["order_date"].isna()] = "missing order_date"
     reason[df["unit_price"].isna()] = "missing unit_price"
