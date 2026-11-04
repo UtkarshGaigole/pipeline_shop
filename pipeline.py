@@ -4,7 +4,8 @@ Run from this folder with:   python pipeline.py
 
 Flow: load -> clean -> validate -> split -> enrich -> output
   data/raw/      read only, never written
-  data/output/   fct_orders.csv, quarantine_orders.csv, revenue_by_city.csv
+  data/output/   fct_orders.csv, quarantine_orders.csv, revenue_by_city.csv,
+                 revenue_by_category.csv
   logs/          run_log.txt (one block per run)
 """
 import sys
@@ -166,6 +167,17 @@ def validate_output(fct, trusted, quarantine, rows_after_dedup):
     log(f"Output check passed: {len(trusted)} + {len(quarantine)} = {rows_after_dedup} rows, fct_orders rules OK")
 
 
+def revenue_by_category(fct):
+    """Business summary per product category: orders, items, revenue and share of revenue."""
+    out = (fct.groupby("category", as_index=False)
+              .agg(orders=("order_id", "nunique"), quantity=("quantity", "sum"),
+                   line_total=("line_total", "sum")))
+    out["line_total"] = out["line_total"].round(2)
+    out["quantity"] = out["quantity"].astype(int)
+    out["share_pct"] = (100 * out["line_total"] / out["line_total"].sum()).round(1)
+    return out.sort_values("line_total", ascending=False).reset_index(drop=True)
+
+
 def output(fct, quarantine):
     OUT.mkdir(parents=True, exist_ok=True)
     fct.to_csv(OUT / "fct_orders.csv", index=False)
@@ -173,8 +185,12 @@ def output(fct, quarantine):
     revenue = (fct.groupby("city", as_index=False)["line_total"].sum().round(2)
                   .sort_values("line_total", ascending=False))
     revenue.to_csv(OUT / "revenue_by_city.csv", index=False)
+    by_cat = revenue_by_category(fct)
+    by_cat.to_csv(OUT / "revenue_by_category.csv", index=False)
     log(f"Revenue: EUR {fct['line_total'].sum():,.0f}")
-    log("Wrote fct_orders.csv, quarantine_orders.csv, revenue_by_city.csv")
+    log("By category: " + ", ".join(f"{r.category} EUR {r.line_total:,.2f} ({r.share_pct}%)"
+                                    for r in by_cat.itertuples()))
+    log("Wrote fct_orders.csv, quarantine_orders.csv, revenue_by_city.csv, revenue_by_category.csv")
 
 
 def main():
