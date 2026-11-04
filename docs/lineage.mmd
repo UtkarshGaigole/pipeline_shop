@@ -1,0 +1,48 @@
+flowchart LR
+    classDef raw fill:#EEF2F7,stroke:#5B6B7F,color:#1F2933
+    classDef step fill:#FFFFFF,stroke:#3A6EA5,color:#1F2933
+    classDef gate fill:#FFF4E5,stroke:#C77700,color:#1F2933
+    classDef out fill:#E8F5EE,stroke:#2E8B57,color:#1F2933
+    classDef bad fill:#FDECEC,stroke:#C0392B,color:#1F2933
+
+    subgraph RAW["data/raw/  (read only)"]
+        O1["orders_2026_01.csv<br/>7 rows"]:::raw
+        O2["orders_2026_02.csv<br/>7 rows"]:::raw
+        O3["orders_2026_03.csv<br/>3 rows, prices in cents"]:::raw
+        C["customers.csv<br/>9 customers"]:::raw
+    end
+
+    L["load_raw()<br/>17 rows + source_file"]:::step
+    CO["clean_orders()<br/>dedup 17 to 16, trim, dates,<br/>numbers, March prices / 100"]:::step
+    CC["clean_customers()<br/>trim, Germny to Germany,<br/>email_flag"]:::step
+    V{"validate()<br/>rules.py"}:::gate
+    S["split()<br/>row-level problems"]:::step
+    E["enrich_orders()<br/>+ city, segment,<br/>order_month, line_total"]:::step
+    VO{"validate_output()<br/>row counts + fct rules"}:::gate
+
+    F["fct_orders.csv<br/>12 rows"]:::out
+    Q["quarantine_orders.csv<br/>4 rows + reason"]:::bad
+    RC["revenue_by_city.csv"]:::out
+    RK["revenue_by_category.csv<br/>NEW"]:::out
+    LOG["logs/run_log.txt<br/>every run + code version"]:::raw
+    STOP["STOP: no outputs written<br/>log status FAILED"]:::bad
+
+    O1 --> L
+    O2 --> L
+    O3 --> L
+    C --> CC
+    L --> CO
+    CO --> V
+    CC --> V
+    V -- "critical rule broken" --> STOP
+    V -- "passed (email: warn only)" --> S
+    S -- "4 rows" --> Q
+    S -- "12 trusted" --> E
+    CC -- "city, segment" --> E
+    E --> VO
+    VO -- "mismatch" --> STOP
+    VO -- "passed" --> F
+    VO --> RC
+    VO --> RK
+    STOP -.-> LOG
+    F -.-> LOG
