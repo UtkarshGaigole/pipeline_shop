@@ -8,6 +8,7 @@ Flow: load -> clean -> validate -> split -> enrich -> output
   logs/          run_log.txt (one block per run)
 """
 import sys
+import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -71,18 +72,39 @@ def clean_orders(orders):
     return df
 
 
+COUNTRY_FIXES = {"Germny": "Germany"}          # known typos in the customer master
+EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$"
+
+
 def clean_customers(customers):
+    """Trim text, fix known country typos, flag (not drop) bad emails."""
     df = customers.copy()
     for c in df.columns:
         df[c] = df[c].str.strip()
+    typo = df["country"].isin(COUNTRY_FIXES)
+    if typo.any():
+        log(f"Fixed country typo for {', '.join(df.loc[typo, 'customer_id'])}: "
+            f"{', '.join(sorted(set(df.loc[typo, 'country'])))} -> Germany")
+    df["country"] = df["country"].replace(COUNTRY_FIXES)
+    df["email_flag"] = "ok"
+    df.loc[df["email"] == "", "email_flag"] = "missing"
+    df.loc[(df["email"] != "") & ~df["email"].str.match(EMAIL_PATTERN), "email_flag"] = "invalid"
+    flagged = df[df["email_flag"] != "ok"]
+    if len(flagged):
+        log("Email flagged (kept): " + ", ".join(f"{r.customer_id} {r.email_flag}" for r in flagged.itertuples()))
     return df
 
 
 def validate(orders, customers):
     """Critical rules: if any fails, STOP and write nothing."""
     try:
-        rules.clean_orders_rules.validate(orders, lazy=True)
-        rules.clean_customers_rules.validate(customers, lazy=True)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            rules.clean_orders_rules.validate(orders, lazy=True)
+            rules.clean_customers_rules.validate(customers, lazy=True)
+        for w in caught:                      # warning-level rules: log, do not stop
+            if issubclass(w.category, pa.errors.SchemaWarning):
+                log("Rule warning (no stop): " + " ".join(str(w.message).split())[:160])
     except pa.errors.SchemaErrors as err:
         log("VALIDATION FAILED - pipeline stopped, no outputs written:")
         cases = err.failure_cases[["column", "check", "failure_case", "index"]]

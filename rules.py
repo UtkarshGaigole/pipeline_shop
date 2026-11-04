@@ -22,5 +22,15 @@ clean_customers_rules = pa.DataFrameSchema({
                             checks=Check.str_matches(r"^C\d{3}$")),
     "customer_name": Column(str, nullable=False),
     "city":          Column(str, nullable=False),
-    # Lab 3.2: add rules for 'email' and 'country' here
+    # Lab 3.2 - email: name@domain.tld or empty. WARNING level: a bad email is
+    # flagged (email_flag), it does not stop the run - email is not needed for revenue.
+    # Empty cells arrive as "" (read as text), not as null, so "" is allowed explicitly.
+    "email":         Column(str, nullable=True,
+                            checks=Check.str_matches(r"^$|^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$",
+                                                     raise_warning=True,
+                                                     error="email format name@domain.tld")),
+    # Lab 3.2 - country: DACH only. STOP level, checked AFTER the known typo
+    # 'Germny' is fixed in clean_customers(): a new unknown country is a real problem.
+    "country":       Column(str,
+                            checks=Check.isin(["Germany", "Austria", "Switzerland"])),
 })
