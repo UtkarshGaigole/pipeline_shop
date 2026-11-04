@@ -5,12 +5,24 @@ If a rule here fails, the pipeline STOPS and writes nothing (see pipeline.valida
 Row-level problems (bad quantity, unknown customer, ...) are handled in
 pipeline.split() and go to the quarantine file instead.
 """
+import pandas as pd
 import pandera.pandas as pa
 from pandera.pandas import Column, Check
+
+
+# ---------- custom checks (plain functions: one Series in, True/False per row out) ----------
+def not_in_future(dates: pd.Series) -> pd.Series:
+    """Timeliness / accuracy: an order cannot be placed after today.
+    Missing dates pass here - they are a row-level problem and go to quarantine."""
+    return dates.isna() | (dates <= pd.Timestamp.today().normalize())
+
 
 clean_orders_rules = pa.DataFrameSchema({
     "order_id":    Column(str, unique=True, nullable=False,
                           checks=Check.str_matches(r"^[A-Z]\d{3}$")),
+    # NEW (custom check): order_date may not be in the future
+    "order_date":  Column(nullable=True,
+                          checks=Check(not_in_future, error="order_date in the future")),
     "customer_id": Column(str, nullable=False),
     "category":    Column(str, Check.isin(["Accessories", "Electronics"])),
     "quantity":    Column(float, nullable=True),
