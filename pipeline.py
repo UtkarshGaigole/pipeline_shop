@@ -8,6 +8,7 @@ Flow: load -> clean -> validate -> split -> enrich -> output
                  revenue_by_category.csv
   logs/          run_log.txt (one block per run)
 """
+import subprocess
 import sys
 import warnings
 from datetime import datetime
@@ -29,6 +30,19 @@ log_lines = []
 def log(msg):
     print(msg)
     log_lines.append(msg)
+
+
+def code_version():
+    """Git commit of the code that ran (+ '-dirty' if there were uncommitted changes)."""
+    try:
+        git = ["git", "-C", str(BASE)]
+        commit = subprocess.run(git + ["rev-parse", "--short", "HEAD"], capture_output=True,
+                                text=True, check=True).stdout.strip()
+        dirty = subprocess.run(git + ["status", "--porcelain", "--", "*.py", "requirements.txt"],
+                               capture_output=True, text=True).stdout.strip()
+        return commit + ("-dirty" if dirty else "")
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown (not a git checkout)"
 
 
 def write_log(status):
@@ -194,6 +208,7 @@ def output(fct, quarantine):
 
 
 def main():
+    log(f"Code version: {code_version()}")
     raw_orders, raw_customers = load_raw()
     orders = clean_orders(raw_orders)
     customers = clean_customers(raw_customers)
