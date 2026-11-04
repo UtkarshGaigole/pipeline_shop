@@ -26,7 +26,11 @@ clean_orders_rules = pa.DataFrameSchema({
     "customer_id": Column(str, nullable=False),
     "category":    Column(str, Check.isin(["Accessories", "Electronics"])),
     "quantity":    Column(float, nullable=True),
-    "unit_price":  Column(float, Check.ge(0), nullable=True),
+    # NEW: plausibility - no product in this shop costs more than EUR 2,000.
+    # Also guards the cents correction: without it, March prices (e.g. 4638) fail here.
+    "unit_price":  Column(float, [Check.ge(0),
+                                  Check.le(2000, error="unit_price above EUR 2,000 (cents?)")],
+                          nullable=True),
 })
 
 clean_customers_rules = pa.DataFrameSchema({
