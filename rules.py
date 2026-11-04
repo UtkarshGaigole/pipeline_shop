@@ -23,7 +23,8 @@ clean_orders_rules = pa.DataFrameSchema({
     # NEW (custom check): order_date may not be in the future
     "order_date":  Column(nullable=True,
                           checks=Check(not_in_future, error="order_date in the future")),
-    "customer_id": Column(str, nullable=False),
+    # NEW: same ID format as the customer master (C + 3 digits)
+    "customer_id": Column(str, nullable=False, checks=Check.str_matches(r"^C\d{3}$")),
     "category":    Column(str, Check.isin(["Accessories", "Electronics"])),
     "quantity":    Column(float, nullable=True),
     # NEW: plausibility - no product in this shop costs more than EUR 2,000.
@@ -49,4 +50,6 @@ clean_customers_rules = pa.DataFrameSchema({
     # 'Germny' is fixed in clean_customers(): a new unknown country is a real problem.
     "country":       Column(str,
                             checks=Check.isin(["Germany", "Austria", "Switzerland"])),
+    # NEW: segment drives revenue by segment - only the two known values
+    "segment":       Column(str, checks=Check.isin(["Private", "Business"])),
 })
