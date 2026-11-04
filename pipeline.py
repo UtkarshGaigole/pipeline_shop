@@ -138,10 +138,32 @@ def split(orders, customers):
 
 
 def enrich_orders(trusted, customers):
-    """Add line_total and the customer's city."""
-    df = trusted.merge(customers[["customer_id", "city"]], on="customer_id", how="left")
+    """Add the customer's city and segment, the order month and line_total."""
+    df = trusted.merge(customers[["customer_id", "city", "segment"]], on="customer_id", how="left")
+    df["order_month"] = df["order_date"].dt.strftime("%Y-%m")
     df["line_total"] = (df["quantity"] * df["unit_price"]).round(2)
     return df
+
+
+def validate_output(fct, trusted, quarantine, rows_after_dedup):
+    """Last gate before writing: reconcile row counts and check fct_orders."""
+    problems = []
+    if len(trusted) + len(quarantine) != rows_after_dedup:
+        problems.append(f"row count mismatch: {len(trusted)} trusted + {len(quarantine)} "
+                        f"quarantined != {rows_after_dedup} rows after dedup")
+    if len(fct) != len(trusted):
+        problems.append(f"enrich changed the row count: {len(trusted)} -> {len(fct)} (join duplicates?)")
+    try:
+        rules.fct_orders_rules.validate(fct, lazy=True)
+    except pa.errors.SchemaErrors as err:
+        problems.append(err.failure_cases[["column", "check", "failure_case", "index"]].to_string(index=False))
+    if problems:
+        log("OUTPUT CHECK FAILED - pipeline stopped, no outputs written:")
+        for p in problems:
+            log(p)
+        write_log("FAILED")
+        sys.exit(1)
+    log(f"Output check passed: {len(trusted)} + {len(quarantine)} = {rows_after_dedup} rows, fct_orders rules OK")
 
 
 def output(fct, quarantine):
@@ -162,6 +184,7 @@ def main():
     validate(orders, customers)
     trusted, quarantine = split(orders, customers)
     fct = enrich_orders(trusted, customers)
+    validate_output(fct, trusted, quarantine, len(orders))
     output(fct, quarantine)
     write_log("SUCCESS")
 

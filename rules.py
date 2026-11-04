@@ -53,3 +53,23 @@ clean_customers_rules = pa.DataFrameSchema({
     # NEW: segment drives revenue by segment - only the two known values
     "segment":       Column(str, checks=Check.isin(["Private", "Business"])),
 })
+
+
+# ---------- output rules: checked on fct_orders BEFORE anything is written ----------
+def line_total_matches(df: pd.DataFrame) -> pd.Series:
+    """Accuracy (custom, table level): line_total must equal quantity x unit_price."""
+    return (df["line_total"] - (df["quantity"] * df["unit_price"]).round(2)).abs() < 0.005
+
+
+fct_orders_rules = pa.DataFrameSchema(
+    {
+        "order_id":    Column(str, unique=True, nullable=False),
+        "quantity":    Column(float, Check.gt(0)),
+        "unit_price":  Column(float, nullable=False),
+        "city":        Column(str, nullable=False),          # every trusted order found its customer
+        "segment":     Column(str, Check.isin(["Private", "Business"])),
+        "order_month": Column(str, Check.str_matches(r"^\d{4}-\d{2}$")),
+        "line_total":  Column(float, Check.ge(0)),
+    },
+    checks=Check(line_total_matches, error="line_total = quantity x unit_price"),
+)
