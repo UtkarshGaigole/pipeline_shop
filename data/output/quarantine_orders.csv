@@ -1,0 +1,5 @@
+order_id,order_date,customer_id,category,quantity,unit_price,source_file,reason
+O105,2026-01-15,C004,Accessories,-1.0,9.99,orders_2026_01.csv,quantity <= 0
+O109,2026-02-05,C099,Electronics,1.0,299.0,orders_2026_02.csv,unknown customer
+O111,2026-02-14,C005,Accessories,2.0,,orders_2026_02.csv,missing unit_price
+O116,,C006,Electronics,1.0,159.0,orders_2026_03.csv,missing order_date

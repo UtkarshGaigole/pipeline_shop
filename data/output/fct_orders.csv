@@ -1,0 +1,13 @@
+order_id,order_date,customer_id,category,quantity,unit_price,source_file,city,segment,order_month,line_total
+O101,2026-01-04,C001,Electronics,1.0,499.0,orders_2026_01.csv,Berlin,Private,2026-01,499.0
+O102,2026-01-07,C002,Accessories,2.0,19.99,orders_2026_01.csv,Hamburg,Business,2026-01,39.98
+O103,2026-01-09,C003,Electronics,1.0,899.0,orders_2026_01.csv,Munich,Private,2026-01,899.0
+O104,2026-01-12,C004,Accessories,3.0,9.99,orders_2026_01.csv,Munich,Private,2026-01,29.97
+O106,2026-01-21,C005,Electronics,1.0,349.0,orders_2026_01.csv,Cologne,Business,2026-01,349.0
+O107,2026-01-28,C001,Accessories,1.0,24.5,orders_2026_01.csv,Berlin,Private,2026-01,24.5
+O108,2026-02-02,C006,Electronics,2.0,129.0,orders_2026_02.csv,Frankfurt,Business,2026-02,258.0
+O110,2026-02-11,C007,Accessories,4.0,12.9,orders_2026_02.csv,Vienna,Private,2026-02,51.6
+O112,2026-02-17,C002,Electronics,1.0,1199.0,orders_2026_02.csv,Hamburg,Business,2026-02,1199.0
+O113,2026-02-25,C008,Electronics,1.0,578.59,orders_2026_02.csv,Berlin,Business,2026-02,578.59
+O114,2026-03-03,C009,Accessories,2.0,19.99,orders_2026_03.csv,Vienna,Private,2026-03,39.98
+O115,2026-03-10,C003,Accessories,1.0,46.38,orders_2026_03.csv,Munich,Private,2026-03,46.38

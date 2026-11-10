@@ -1,0 +1,60 @@
+=== run 2026-11-10 10:54:36 - SUCCESS ===
+Code version: a6fff99
+Loaded 17 order rows from 3 files, 9 customers
+Removed 1 exact duplicate(s): 17 -> 16 rows
+Price correction: 3 row(s) from orders_2026_03.csv divided by 100 (cents -> EUR)
+Fixed country typo for C007: Germny -> Germany
+Email flagged (kept): C003 invalid, C008 missing
+Rule warning (no stop): Column 'email' failed element-wise validator number 0: email format name@domain.tld failure cases: clara.schmidt(at)web.de
+Validation passed: all critical rules OK
+Split: 12 trusted, 4 quarantined
+Output check passed: 12 + 4 = 16 rows, fct_orders rules OK
+Revenue: EUR 4,015
+By category: Electronics EUR 3,782.59 (94.2%), Accessories EUR 232.41 (5.8%)
+Wrote fct_orders.csv, quarantine_orders.csv, revenue_by_city.csv, revenue_by_category.csv
+
+=== run 2026-11-10 10:54:44 - SUCCESS ===
+Code version: a6fff99
+Loaded 17 order rows from 3 files, 9 customers
+Removed 1 exact duplicate(s): 17 -> 16 rows
+Price correction: 3 row(s) from orders_2026_03.csv divided by 100 (cents -> EUR)
+Fixed country typo for C007: Germny -> Germany
+Email flagged (kept): C003 invalid, C008 missing
+Rule warning (no stop): Column 'email' failed element-wise validator number 0: email format name@domain.tld failure cases: clara.schmidt(at)web.de
+Validation passed: all critical rules OK
+Split: 12 trusted, 4 quarantined
+Output check passed: 12 + 4 = 16 rows, fct_orders rules OK
+Revenue: EUR 4,015
+By category: Electronics EUR 3,782.59 (94.2%), Accessories EUR 232.41 (5.8%)
+Wrote fct_orders.csv, quarantine_orders.csv, revenue_by_city.csv, revenue_by_category.csv
+
+=== run 2026-11-10 10:54:55 - FAILED ===
+Code version: a6fff99
+Loaded 22 order rows from 4 files, 9 customers
+Removed 1 exact duplicate(s): 22 -> 21 rows
+Price correction: 3 row(s) from orders_2026_03.csv divided by 100 (cents -> EUR)
+Fixed country typo for C007: Germny -> Germany
+Email flagged (kept): C003 invalid, C008 missing
+VALIDATION FAILED - pipeline stopped, no outputs written:
+    column                                check failure_case  index
+  order_id                     field_uniqueness         O101      0
+  order_id                     field_uniqueness         O101     19
+  order_id          str_matches('^[A-Z]\d{3}$')        A1001     20
+  category isin(['Accessories', 'Electronics'])      Gadgets     20
+unit_price          greater_than_or_equal_to(0)         -5.0     21
+
+=== run 2026-11-10 10:55:06 - SUCCESS ===
+Code version: a6fff99
+Loaded 17 order rows from 3 files, 9 customers
+Removed 1 exact duplicate(s): 17 -> 16 rows
+Price correction: 3 row(s) from orders_2026_03.csv divided by 100 (cents -> EUR)
+Fixed country typo for C007: Germny -> Germany
+Email flagged (kept): C003 invalid, C008 missing
+Rule warning (no stop): Column 'email' failed element-wise validator number 0: email format name@domain.tld failure cases: clara.schmidt(at)web.de
+Validation passed: all critical rules OK
+Split: 12 trusted, 4 quarantined
+Output check passed: 12 + 4 = 16 rows, fct_orders rules OK
+Revenue: EUR 4,015
+By category: Electronics EUR 3,782.59 (94.2%), Accessories EUR 232.41 (5.8%)
+Wrote fct_orders.csv, quarantine_orders.csv, revenue_by_city.csv, revenue_by_category.csv
+
